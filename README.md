@@ -1,1 +1,1 @@
-Please refer to slides/JoSy S3 - Strasbourg - Octobre 2025.pdf for instructions.
+Please refer to the [slides/JoSy S3 - Strasbourg - Octobre 2025.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/JoSy%20S3%20-%20Strasbourg%20-%20Octobre%202025.pdf) for instructions.
