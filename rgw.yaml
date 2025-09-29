@@ -1,0 +1,26 @@
+service_type: rgw
+service_id: monde-france-metz
+service_name: rgw.monde-france-metz
+placement:
+  count: 1
+  label: rgws_metz
+spec:
+  rgw_frontend_port: 8080
+  rgw_realm: monde
+  rgw_zone: metz
+  rgw_zonegroup: france
+---
+service_type: rgw
+service_id: monde-france-nancy
+service_name: rgw.monde-france-nancy
+placement:
+  count: 1
+  label: rgws_nancy
+spec:
+  rgw_frontend_port: 8080
+  rgw_realm: monde
+  rgw_zone: nancy
+  rgw_zonegroup: france
+extra_container_args:
+  - "-v"
+  - "/etc/ceph/rgw_storageclass_rules.conf:/etc/ceph/rgw_storageclass_rules.conf:ro"

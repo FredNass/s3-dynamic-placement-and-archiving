@@ -1,0 +1,24 @@
+{
+    "Rules": [
+        {
+            "Filter": {
+                "Prefix": ""
+            },
+            "Status": "Enabled",
+            "Transitions": [
+                {
+                    "Days": 30,
+                    "StorageClass": "DEEP_ARCHIVE"
+                }
+            ],
+            "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 10
+            },
+            "Expiration": {
+                "Days": 365
+            },
+            "ID": "Transition after 30 days and expiration after 365 days"
+        }
+    ]
+}
+
