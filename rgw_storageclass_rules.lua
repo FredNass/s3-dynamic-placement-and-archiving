@@ -1,16 +1,12 @@
--- rgw_storageclass_rules.lua (default_class + unités)
--- Contexte: preRequest
--- Fichier de config: /etc/ceph/rgw_storageclass_rules.conf
+-- rgw_storageclass_rules.lua (select most restrictive matching rule)
+-- Context: preRequest
+-- Config file: /etc/ceph/rgw_storageclass_rules.conf
 
 local CONFIG_PATH = "/etc/ceph/rgw_storageclass_rules.conf"
 
-local function log(msg)
-  RGWDebugLog(msg)
-end
+local function log(msg) RGWDebugLog(msg) end
 
-local function trim(s)
-  return (s or ""):gsub("^%s+", ""):gsub("%s+$", "")
-end
+local function trim(s) return (s or ""):gsub("^%s+", ""):gsub("%s+$", "") end
 
 local function to_bool(v, default)
   if not v or v == "" then return default end
@@ -20,7 +16,9 @@ local function to_bool(v, default)
   return default
 end
 
--- Conversion tailles avec unités (SI et IEC)
+-- Size parsing with units (SI and IEC)
+-- Accepts: B, K/KB, KiB, M/MB, MiB, G/GB, GiB, T/TB, TiB, P/PB, PiB (case-insensitive)
+-- Convention: bare K/M/G/T/P are base 1024 (K=KiB, M=MiB, ...)
 local function parse_size(sz)
   sz = trim(sz or "")
   if sz == "" or sz == "*" then return 0, "0B" end
@@ -43,7 +41,8 @@ local function parse_size(sz)
   return bytes, pretty
 end
 
--- Règle: STORAGECLASS;PATTERN;OP;BYTES;BUCKET;TENANT;OVERRIDE
+-- Rule line: STORAGECLASS;PATTERN;OP;BYTES;BUCKET;TENANT;OVERRIDE
+-- OP in {<, <=, =, >=, >, *}
 local function parse_rule(line, lineno)
   local parts = {}
   for field in string.gmatch(line, "([^;]+)") do parts[#parts+1] = trim(field) end
@@ -116,6 +115,18 @@ local function size_matches(op, threshold, content_len)
   return false
 end
 
+-- Specificity score for matched rules:
+-- +1 if tenant is specific (!="*"), +1 if bucket is specific,
+-- +1 if pattern is specific, +1 if op is specific (!="*")
+local function specificity_score(r)
+  local s = 0
+  if r.tenant and r.tenant ~= "*" then s = s + 1 end
+  if r.bucket and r.bucket ~= "*" then s = s + 1 end
+  if r.pattern and r.pattern ~= "*" then s = s + 1 end
+  if r.op and r.op ~= "*" then s = s + 1 end
+  return s
+end
+
 local function get_http_storage_class()
   return Request.HTTP and Request.HTTP.StorageClass or nil
 end
@@ -128,6 +139,7 @@ local function is_put_obj()
   return (Request and Request.RGWOp == "put_obj")
 end
 
+-- MPU detection without Request.Params
 local function detect_mpu_phase()
   if Request and Request.RGWOp then
     local op = Request.RGWOp
@@ -148,7 +160,7 @@ if not Request then return end
 
 local cfg = load_config(CONFIG_PATH)
 
--- MPU: appliquer classe par défaut à l'initiation si configurée
+-- MPU: apply default class at initiation if configured
 do
   local mpu_phase = detect_mpu_phase()
   if mpu_phase == "initiate" and cfg.mpu_default_class then
@@ -166,7 +178,7 @@ do
   end
 end
 
--- Règles: uniquement pour PUT non-MPU
+-- Rules for non-MPU PUT only
 if not is_put_obj() then return end
 
 local bucket = (Request.Bucket and Request.Bucket.Name) or ""
@@ -174,11 +186,14 @@ local tenant = (Request.Bucket and Request.Bucket.Tenant) or ""
 local obj    = (Request.Object and Request.Object.Name) or ""
 local clen   = Request.ContentLength
 
-local matched_count = 0
-local applied_sc = nil
-local applied_rule_idx = nil
 local client_sc = get_http_storage_class()
 local any_client_sc = (client_sc ~= nil and client_sc ~= "")
+
+local matched_total = 0
+local best_rule_idx = nil
+local best_score = -1
+local best_sc = nil
+local best_will_override = false
 
 for idx, r in ipairs(cfg.rules) do
   local reasons = {}
@@ -190,19 +205,22 @@ for idx, r in ipairs(cfg.rules) do
   if ok and not size_matches(r.op, r.bytes, clen) then ok = false; reasons[#reasons+1] = "size op mismatch" end
 
   if ok then
-    matched_count = matched_count + 1
-    client_sc = get_http_storage_class()
-    local will_override = r.override or (not client_sc or client_sc == "")
+    matched_total = matched_total + 1
+    local curr_client_sc = get_http_storage_class()
+    local will_override = r.override or (not curr_client_sc or curr_client_sc == "")
+    local score = specificity_score(r)
+    log(string.format(
+      "Rule #%d (line %d) MATCH (score=%d) -> %s (override=%s) obj='%s' size=%s bucket='%s' tenant='%s' threshold=%s",
+      idx, r.lineno or -1, score, will_override and "candidate" or "not candidate (client SC present)",
+      tostring(r.override), obj, tostring(clen), bucket, tenant, r.bytes_str))
+
     if will_override then
-      applied_sc = r.storage_class
-      applied_rule_idx = idx
-      log(string.format(
-        "Rule #%d (line %d) MATCH -> apply StorageClass='%s' (override=%s) obj='%s' size=%s bucket='%s' tenant='%s' threshold=%s",
-        idx, r.lineno or -1, r.storage_class, tostring(r.override), obj, tostring(clen), bucket, tenant, r.bytes_str))
-    else
-      log(string.format(
-        "Rule #%d (line %d) MATCH -> client StorageClass present, not overriding (override=false) obj='%s' threshold=%s",
-        idx, r.lineno or -1, obj, r.bytes_str))
+      if score > best_score or (score == best_score and idx > (best_rule_idx or -1)) then
+        best_rule_idx = idx
+        best_score = score
+        best_sc = r.storage_class
+        best_will_override = true
+      end
     end
   else
     log(string.format(
@@ -211,33 +229,33 @@ for idx, r in ipairs(cfg.rules) do
   end
 end
 
-if matched_count > 1 then
-  if applied_rule_idx then
-    log(string.format("Multiple rules matched (%d); effective rule #%d", matched_count, applied_rule_idx))
+if matched_total > 1 then
+  if best_rule_idx then
+    log(string.format("Multiple rules matched (%d); selected most restrictive rule #%d (score=%d)", matched_total, best_rule_idx, best_score))
   else
-    local msg = "Multiple rules matched (%d); client StorageClass kept (no override)"
+    local msg = "Multiple rules matched (%d); client StorageClass kept (no eligible override)"
     if not any_client_sc then
-      msg = "Multiple rules matched (%d); no effective rule (no override and no client SC)"
+      msg = "Multiple rules matched (%d); no eligible override and no client SC -> will try default_class"
     end
-    log(string.format(msg, matched_count))
+    log(string.format(msg, matched_total))
   end
 end
 
--- Appliquer default_class si aucune règle n'a appliqué
-if not applied_sc and cfg.default_class then
-  local csc = get_http_storage_class()
-  if cfg.default_force or (not csc or csc == "") then
-    set_http_storage_class(cfg.default_class)
-    log("No rule applied: apply default StorageClass='" .. cfg.default_class ..
-        "' (default_force=" .. tostring(cfg.default_force) .. ")")
-  else
-    log("No rule applied: keep client StorageClass='" .. tostring(csc) .. "' (default_force=false)")
+-- Apply the most restrictive eligible rule if available
+if best_rule_idx and best_sc and best_will_override then
+  set_http_storage_class(best_sc)
+  log(string.format("Applied StorageClass='%s' by most restrictive rule #%d (score=%d) to object '%s'",
+      best_sc, best_rule_idx, best_score, obj))
+else
+  -- Otherwise, apply default_class if configured
+  if cfg.default_class then
+    local csc = get_http_storage_class()
+    if cfg.default_force or (not csc or csc == "") then
+      set_http_storage_class(cfg.default_class)
+      log("No candidate rule applied: apply default StorageClass='" .. cfg.default_class ..
+          "' (default_force=" .. tostring(cfg.default_force) .. ")")
+    else
+      log("No candidate rule applied: keep client StorageClass='" .. tostring(csc) .. "' (default_force=false)")
+    end
   end
 end
-
--- Final: si une règle a fixé applied_sc, on l'écrit maintenant
-if applied_sc then
-  set_http_storage_class(applied_sc)
-  log(string.format("Applied StorageClass='%s' to object '%s'", applied_sc, obj))
-end
-
