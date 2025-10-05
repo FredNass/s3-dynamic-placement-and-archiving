@@ -36,7 +36,7 @@ Rules selection:
 - Each candidate gets a specificity score: +1 for a specific tenant, +1 for a specific bucket, +1 for a specific name pattern, +1 for a specific size operator. The rule with the highest score wins; on ties, the last rule in the file wins.
 - If no candidate applies, the script falls back to default_class (if set), honoring default_force or preserving the client StorageClass if present.
 
-Notes:
+Note regarding MPU (Multipart Uploads) vs non-MPU PUTs:
 
 - non-MPU PUTs: Size thresholds use Request.ContentLength, and unit parsing supports both SI (KB/MB/GB/…) and IEC (KiB/MiB/GiB/…) with bare K/M/G/T/P treated as base 1024.
 - MPU PUTs: at initiation, mpu_default_class is applied (forced if mpu_force=true); parts and completion are ignored by the rules.
