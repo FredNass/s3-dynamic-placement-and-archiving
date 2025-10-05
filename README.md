@@ -2,6 +2,8 @@ Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on
 
 Purpose: Demonstrate that Ceph S3's supports dynamic placement and cost‑efficient, policy‑driven data retention.
 
+Presentation at [slides/JoSy S3 - Strasbourg - Octobre 2025.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/JoSy%20S3%20-%20Strasbourg%20-%20Octobre%202025.pdf).
+
 Scripting:
 
 The [LUA script](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/rgw_storageclass_rules.lua) on this repo was written from scratch to allow:
@@ -42,5 +44,3 @@ Note regarding MPU (Multipart Uploads) vs non-MPU PUTs:
 
 - non-MPU PUTs: Size thresholds use Request.ContentLength, and unit parsing supports both SI (KB/MB/GB/…) and IEC (KiB/MiB/GiB/…) with bare K/M/G/T/P treated as base 1024.
 - MPU PUTs: at initiation, mpu_default_class is applied (forced if mpu_force=true); parts and completion are ignored by the rules.
-  
-Presentation at [slides/JoSy S3 - Strasbourg - Octobre 2025.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/JoSy%20S3%20-%20Strasbourg%20-%20Octobre%202025.pdf).
