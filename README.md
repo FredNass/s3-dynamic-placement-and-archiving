@@ -1,6 +1,6 @@
 Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on RGW autotiering. Make sure to read his excellent article [here](https://ceph.io/en/news/blog/2024/auto-tiering-ceph-object-storage-part-1/) and to check his Github [repo](https://github.com/OSNEXUS/rgw-autotier)
 
-Purpose: Demonstrate that Ceph S3's supports dynamic placement and cost‑efficient, policy‑driven data retention.
+Purpose: Highlight Ceph S3's support for dynamic placement and cost‑efficient, policy‑driven data retention.
 
 Presentation at [slides/JoSy S3 - Strasbourg - Octobre 2025.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/JoSy%20S3%20-%20Strasbourg%20-%20Octobre%202025.pdf).
 
