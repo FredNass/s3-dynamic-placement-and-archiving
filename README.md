@@ -1,4 +1,4 @@
-Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on RGW autotiering.
+Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on RGW autotiering. Make sure to read his excellent articles [here](https://ceph.io/en/news/blog/2024/auto-tiering-ceph-object-storage-part-1/) and to check his Github [repo](https://github.com/OSNEXUS/rgw-autotier)
 
 LUA script was written from scratch to allow:
 - using a default storage class for MPU uploads (mpu_default_class/mpu_force) as S3 object size can't be used as a rule criteria with MPU uploads
