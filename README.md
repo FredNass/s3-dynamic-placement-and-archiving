@@ -15,15 +15,15 @@ The [LUA script](https://github.com/FredNass/s3-dynamic-placement-and-archiving/
 Configuration:
 
 ```
-# Paramètres globaux MPU
+# MPU PUTs settings
 mpu_default_class=DEEP_ARCHIVE
 mpu_force=true
 
-# Paramètres globaux défaut non-MPU
+# non-MPU PUTs settings
 default_class=STANDARD_IA
 default_force=false
 
-# Règles PUT objet (non-MPU)
+# non-MPU PUTs rules
 # STORAGECLASS;PATTERN;OP;BYTES;BUCKET;TENANT;OVERRIDE
 #STANDARD_IA;%.pdf;*;0;*;*;true
 #INTELLIGENT_TIERING;*;<;32768;bucket-logs;*;true
