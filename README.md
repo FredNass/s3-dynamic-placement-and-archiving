@@ -1,8 +1,10 @@
 Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on RGW autotiering. Make sure to read his excellent article [here](https://ceph.io/en/news/blog/2024/auto-tiering-ceph-object-storage-part-1/) and to check his Github [repo](https://github.com/OSNEXUS/rgw-autotier)
 
-RGW LUA Script:
+Purpose: Demonstrate that Ceph S3's supports dynamic placement and cost‑efficient, policy‑driven data retention.
 
-The LUA script on this repo was written from scratch to allow:
+Scripting:
+
+The [LUA script](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/rgw_storageclass_rules.lua) on this repo was written from scratch to allow:
 - using a default storage class for MPU uploads (mpu_default_class/mpu_force) as S3 object size can't be used as a rule criteria with MPU uploads
 - using a default_class/default_force for non-MPU PUTs when no rules match
 - selecting rules on the “most restrictive eligible match wins” using a specificity score for non-MPU PUTs
