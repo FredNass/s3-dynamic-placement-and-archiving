@@ -10,7 +10,7 @@ Presentation:
 Scripting:
 
 The [LUA script](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/rgw_storageclass_rules.lua) on this repo was written from scratch to allow:
-- using a default storage class for MPU uploads (mpu_default_class/mpu_force) as S3 object size can't be used as a rule criteria with MPU uploads
+- using a default storage class for MPU uploads (mpu_default_class/mpu_force) as the S3 object size cannot be determined until MPU upload is complete and therefore cannot be used as a rule criterion.
 - using a default_class/default_force for non-MPU PUTs when no rules match
 - selecting rules on the “most restrictive eligible match wins” using a specificity score for non-MPU PUTs
 - using size units (SI and IEC)
