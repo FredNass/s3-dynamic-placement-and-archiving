@@ -2,7 +2,10 @@ Preambule: This work was inspired by the one from Steven Umbehocker (OSNEXUS) on
 
 Purpose: Highlight Ceph S3's support for dynamic placement and cost‑efficient, policy‑driven data retention.
 
-Presentation at [slides/JoSy S3 - Strasbourg - Octobre 2025.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/JoSy%20S3%20-%20Strasbourg%20-%20Octobre%202025.pdf).
+Presentation:
+
+- [Ceph S3 - Dynamic Placement and Optimized Retention.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/Ceph%20S3%20-%20Dynamic%20Placement%20and%20Optimized%20Retention.pdf) (EN)
+- [Ceph S3 - Placement Dynamique et Rétention Optimisée.pdf](https://github.com/FredNass/s3-dynamic-placement-and-archiving/blob/main/slides/Ceph%20S3%20-%20Placement%20Dynamique%20et%20Rétention%20Optimisée.pdf) (FR)
 
 Scripting:
 
